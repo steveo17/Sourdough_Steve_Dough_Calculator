@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sourdough Steve's Dough Calculator (v2.4.1)</title>
+    <title>Sourdough Steve's Dough Calculator (v2.5.3)</title>
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -69,6 +69,8 @@
             display: flex; 
             justify-content: space-between; 
             align-items: flex-end; 
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         h1 { 
@@ -77,10 +79,16 @@
             letter-spacing: -0.3px;
             color: var(--text-main); 
         }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
         
         .global-controls { 
             display: grid; 
-            grid-template-columns: 1fr 1fr; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
             gap: 24px; 
         }
 
@@ -238,6 +246,62 @@
             color: var(--accent-color);
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--summary-bg);
+            border-color: var(--text-muted);
+        }
+
+        .btn-accent {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-accent:hover {
+            background-color: var(--accent-color);
+            opacity: 0.9;
+        }
+
+        .toggle-btn {
+            padding: 6px 12px;
+            font-family: var(--mono-font);
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
         .insight-section {
             display: flex;
             flex-direction: column;
@@ -283,7 +347,7 @@
             margin-bottom: 14px; 
         }
 
-        .specs-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+        .specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; }
         
         .spec-box { 
             display: flex; 
@@ -308,6 +372,43 @@
             text-align: right; 
             width: 100%; 
         }
+
+        #scale-mode-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-color);
+            z-index: 1000;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+
+        .scale-container {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .scale-item {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .scale-item .name { font-size: 1.2rem; font-weight: 600; }
+        .scale-item .weight { font-family: var(--mono-font); font-size: 1.6rem; font-weight: 700; color: var(--accent-color); }
+        .scale-item.checked { border-color: var(--border-color); opacity: 0.4; }
+        .scale-item.checked .name { text-decoration: line-through; color: var(--text-muted); }
+        .scale-item.checked .weight { color: var(--text-muted); }
 
         footer {
             display: flex;
@@ -342,20 +443,11 @@
             line-height: 1.6;
         }
 
-        .changelog-item {
-            margin-bottom: 10px;
-        }
+        .changelog-item { margin-bottom: 10px; }
+        .changelog-item:last-child { margin-bottom: 0; }
+        .changelog-item strong { font-family: var(--mono-font); color: var(--accent-color); }
 
-        .changelog-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .changelog-item strong {
-            font-family: var(--mono-font);
-            color: var(--accent-color);
-        }
-
-        @media (max-width: 850px) { .workspace-grid { grid-template-columns: 1fr; gap: 20px; } .specs-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 850px) { .workspace-grid { grid-template-columns: 1fr; gap: 20px; } }
     </style>
 </head>
 <body>
@@ -363,7 +455,13 @@
 <div class="calculator-card">
     <header>
         <h1>Sourdough Steve's Dough Calculator</h1>
-        <div id="status-mode" style="font-family: var(--mono-font); font-size: 0.75rem; color: var(--status-success); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Tracking Natural Blend</div>
+        <div class="header-controls">
+            <div>
+                <button id="unit-c" class="toggle-btn" onclick="setTempUnit('C')">°C</button>
+                <button id="unit-f" class="toggle-btn active" onclick="setTempUnit('F')">°F</button>
+            </div>
+            <div id="status-mode" style="font-family: var(--mono-font); font-size: 0.75rem; color: var(--status-success); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Tracking Natural Blend</div>
+        </div>
     </header>
 
     <div class="global-controls">
@@ -371,6 +469,13 @@
             <label>Target Total Flour Weight</label>
             <div class="input-wrapper">
                 <input type="text" id="global-flour-weight" value="400" inputmode="decimal" autocomplete="off">
+                <span class="unit">g</span>
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Target Total Batch Weight</label>
+            <div class="input-wrapper">
+                <input type="text" id="global-batch-weight" value="790" inputmode="decimal" autocomplete="off">
                 <span class="unit">g</span>
             </div>
         </div>
@@ -384,7 +489,6 @@
     </div>
 
     <div class="workspace-grid">
-        <!-- Inclusions Column -->
         <div class="table-panel">
             <table>
                 <thead>
@@ -414,7 +518,6 @@
             </table>
         </div>
 
-        <!-- Flour Column -->
         <div class="table-panel">
             <table>
                 <thead>
@@ -465,24 +568,31 @@
         <div><span id="grand-dough-weight">0.00</span> g</div>
     </div>
 
+    <div class="action-buttons">
+        <button class="btn btn-accent" onclick="openScaleMode()">Scale Out Kitchen Mode</button>
+        <button class="btn" onclick="copyRecipeText()">Copy Text Recipe</button>
+    </div>
+
     <div class="insight-section">
         <div class="insight-block">
             <h4>Dough Weight &amp; Scaling</h4>
             <p>Your total dough weight is <span id="insight-dough-wt">0 g</span>. You could make 1 loaf at <span id="insight-loaf-wt">0 g</span> or <span id="insight-pizza-count">4</span> pizzas at <span id="insight-pizza-wt">0 g</span> each.</p>
         </div>
         <div class="insight-block">
-            <h4>Hydration Context</h4>
-            <p>If using a 100% hydration pre-ferment, the total consolidated hydration of your dough is <span id="insight-true-hydration">0.0%</span>.</p>
+            <h4>Hydration &amp; Autolyse Context</h4>
+            <p>True consolidated hydration is <span id="insight-true-hydration">0.0%</span>. For an autolyse stage holding back levain and salt, mix all flours with <span id="insight-autolyse-water">0 g</span> of water.</p>
         </div>
         <div class="insight-block">
-            <h4>Saving and Sharing</h4>
-            <p>The values you input above are saved dynamically in the URL parameter string so you can easily save or share a recipe. Use this to seed your notes profile each time you mix a batch.</p>
+            <h4>Thermal Metrics &amp; Fermentation Curve</h4>
+            <p>To hit target DDT (<span id="insight-target-ddt">78.0</span>°<span class="unit-text">F</span>), mix water at <span id="insight-water-temp">0.0</span>°<span class="unit-text">F</span>. Based on your room temperature, expect a baseline bulk window of approximately <span id="insight-bulk-window">0.0</span> hours.</p>
         </div>
     </div>
 
     <div class="master-specs">
-        <h3>Flour Base Protein Specs Lookup Registry</h3>
+        <h3>Environment Parameters &amp; Flour Specs Lookup Registry</h3>
         <div class="specs-grid">
+            <div class="spec-box"><label>Ambient Room Temp</label><input type="text" id="env-room" class="ui-sync" data-prop="tempRoom" value="72.0"></div>
+            <div class="spec-box"><label>Flour Base Temp</label><input type="text" id="env-flour" class="ui-sync" data-prop="tempFlour" value="70.0"></div>
             <div class="spec-box"><label>Bread %</label><input type="text" id="prof-bread" class="ui-sync" data-prop="profBread" value="12.7"></div>
             <div class="spec-box"><label>AP %</label><input type="text" id="prof-ap" class="ui-sync" data-prop="profAp" value="11.7"></div>
             <div class="spec-box"><label>Whole Wheat %</label><input type="text" id="prof-ww" class="ui-sync" data-prop="profWw" value="13.8"></div>
@@ -494,6 +604,10 @@
     <footer>
         <div class="changelog-trigger" onclick="toggleChangelog()">View Version History &amp; App Changelog</div>
         <div id="changelog-panel" class="changelog-container">
+            <div class="changelog-item"><strong>v2.5.3:</strong> Restored full sequential historical codebase changelog tracker array. Appended predictive room-heat fermentation time curve profiles to global metrics engines.</div>
+            <div class="changelog-item"><strong>v2.5.2:</strong> Re-anchored application initial state defaults to track Fahrenheit scaling metrics natively on browser execution boots.</div>
+            <div class="changelog-item"><strong>v2.5.1:</strong> Removed loose friction factor constants. Implemented dynamic bidirectional Fahrenheit to Celsius global unit runtime scaling loops.</div>
+            <div class="changelog-item"><strong>v2.5.0:</strong> Integrated Interactive Kitchen Checklist Scale Mode, Reverse Dough Weight scaling engine, Autolyse Liquid split insights, Thermal Desired Dough Water formulas, and Clipboard Exporters.</div>
             <div class="changelog-item"><strong>v2.4.1:</strong> Updated comprehensive application title headers and inner execution instances to explicitly sync with repository branding.</div>
             <div class="changelog-item"><strong>v2.4.0:</strong> Restored the running development changelog as an expandable panel footer element to keep revision documentation localized to browser execution.</div>
             <div class="changelog-item"><strong>v2.3.0:</strong> Integrated brdclc-style metrics cards tracking physical scaling portions, yield limits, and true absolute hydration breaking down preferment hydration pools.</div>
@@ -515,6 +629,15 @@
     </footer>
 </div>
 
+<div id="scale-mode-overlay">
+    <div class="scale-container">
+        <h2 style="text-align: center; margin-bottom: 10px;">Kitchen Scale Mode</h2>
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Place bowl, tare scale, dump ingredient, and tap item to check it off.</p>
+        <div id="scale-checklist-target"></div>
+        <button class="btn" style="margin-top: 20px; padding: 16px;" onclick="closeScaleMode()">Exit Scale Mode</button>
+    </div>
+</div>
+
 <script>
     function toggleChangelog() {
         const el = document.getElementById('changelog-panel');
@@ -524,7 +647,6 @@
     class DoughEngine {
         static calculate(state) {
             const totalFlourGoal = state.totalFlourGoal;
-            
             const optionalPartsSum = state.ap + state.ww + state.spelt;
             const scalingFactor = optionalPartsSum > 100 ? (100 / optionalPartsSum) : 1.0;
 
@@ -570,6 +692,19 @@
             const absoluteTotalWaterMass = wWater + wWaterFromLevain;
             const trueHydrationPct = absoluteTotalFlourMass > 0 ? ((absoluteTotalWaterMass / absoluteTotalFlourMass) * 100) : 0;
 
+            const ddt = state.tempUnit === 'F' ? 78.0 : 25.5;
+            const targetWaterTemp = (3 * ddt) - state.tempRoom - state.tempFlour;
+
+            // Predictive yeast curves mapping ambient temperature values to bulk hour lengths
+            const tempInC = state.tempUnit === 'F' ? (state.tempRoom - 32) * 5/9 : state.tempRoom;
+            let predictedHours = 4.0; 
+            if (tempInC <= 18) predictedHours = 7.0;
+            else if (tempInC <= 20) predictedHours = 5.5;
+            else if (tempInC <= 22) predictedHours = 4.5;
+            else if (tempInC <= 24) predictedHours = 3.5;
+            else if (tempInC <= 26) predictedHours = 2.5;
+            else predictedHours = 2.0;
+
             return {
                 targetProtein,
                 baselineProteinPct,
@@ -584,7 +719,11 @@
                 wSalt,
                 wLevain,
                 grandTotalDough,
-                trueHydrationPct
+                trueHydrationPct,
+                autolyseWater: wWater,
+                targetDdt: ddt,
+                targetWaterTemp,
+                predictedHours
             };
         }
     }
@@ -605,11 +744,15 @@
                 profAp: 11.7,
                 profWw: 13.8,
                 profSpelt: 14.3,
-                profVwg: 75.0
+                profVwg: 75.0,
+                tempUnit: 'F',
+                tempRoom: 72.0,
+                tempFlour: 70.0
             };
 
             this.DOM = {
                 totalFlourInput: document.getElementById('global-flour-weight'),
+                batchWeightInput: document.getElementById('global-batch-weight'),
                 targetProteinInput: document.getElementById('global-target-protein'),
                 statusMode: document.getElementById('status-mode'),
                 wtWater: document.getElementById('wt-water'),
@@ -628,7 +771,13 @@
                 insLoafWt: document.getElementById('insight-loaf-wt'),
                 insPizzaCount: document.getElementById('insight-pizza-count'),
                 insPizzaWt: document.getElementById('insight-pizza-wt'),
-                insTrueHydration: document.getElementById('insight-true-hydration')
+                insTrueHydration: document.getElementById('insight-true-hydration'),
+                insAutolyseWater: document.getElementById('insight-autolyse-water'),
+                insTargetDdt: document.getElementById('insight-target-ddt'),
+                insWaterTemp: document.getElementById('insight-water-temp'),
+                insBulkWindow: document.getElementById('insight-bulk-window'),
+                envRoomInput: document.getElementById('env-room'),
+                envFlourInput: document.getElementById('env-flour')
             };
 
             this.paramMap = {
@@ -639,11 +788,15 @@
                 'levain': 'levain',
                 'ap': 'ap',
                 'ww': 'ww',
-                'spelt': 'spelt'
+                'spelt': 'spelt',
+                'tempRoom': 'trm',
+                'tempFlour': 'tfl',
+                'tempUnit': 'tunt'
             };
 
             this.initEvents();
             this.loadURLParams();
+            this.syncUnitToggleClasses();
             this.render();
         }
 
@@ -663,11 +816,46 @@
                 this.render();
             });
 
+            this.DOM.batchWeightInput.addEventListener('input', (e) => {
+                const targetBatch = parseFloat(e.target.value) || 0;
+                const factor = 1 + (this.state.water / 100) + (this.state.salt / 100) + (this.state.levain / 100);
+                if (factor > 0) {
+                    this.state.totalFlourGoal = targetBatch / factor;
+                    this.DOM.totalFlourInput.value = Math.round(this.state.totalFlourGoal);
+                    this.render(false); 
+                }
+            });
+
             this.DOM.targetProteinInput.addEventListener('input', (e) => {
                 this.state.isUserOverridingProtein = true;
                 this.state.targetProtein = parseFloat(e.target.value) || 0;
                 this.render();
             });
+        }
+
+        setUnit(unit) {
+            if (this.state.tempUnit === unit) return;
+
+            if (unit === 'F') {
+                this.state.tempRoom = (this.state.tempRoom * 9/5) + 32;
+                this.state.tempFlour = (this.state.tempFlour * 9/5) + 32;
+            } else {
+                this.state.tempRoom = (this.state.tempRoom - 32) * 5/9;
+                this.state.tempFlour = (this.state.tempFlour - 32) * 5/9;
+            }
+
+            this.state.tempUnit = unit;
+            this.DOM.envRoomInput.value = this.state.tempRoom.toFixed(1);
+            this.DOM.envFlourInput.value = this.state.tempFlour.toFixed(1);
+
+            this.syncUnitToggleClasses();
+            this.render();
+        }
+
+        syncUnitToggleClasses() {
+            document.getElementById('unit-c').classList.toggle('active', this.state.tempUnit === 'C');
+            document.getElementById('unit-f').classList.toggle('active', this.state.tempUnit === 'F');
+            document.querySelectorAll('.unit-text').forEach(el => el.textContent = this.state.tempUnit);
         }
 
         updateURLParams() {
@@ -686,30 +874,31 @@
 
         loadURLParams() {
             const params = new URLSearchParams(window.location.search);
-            
             if (params.get('boost') === 'true') {
                 this.state.isUserOverridingProtein = true;
             }
-
             for (const [stateKey, paramName] of Object.entries(this.paramMap)) {
                 const val = params.get(paramName);
                 if (val !== null) {
+                    if (stateKey === 'tempUnit') {
+                        this.state.tempUnit = val;
+                        continue;
+                    }
                     const parsedVal = parseFloat(val) || 0;
                     this.state[stateKey] = parsedVal;
                     
-                    let inputEl = null;
+                    let inputEl = document.getElementById(`pct-${stateKey}`) || document.getElementById(`env-${stateKey}`) || document.getElementById(`prof-${stateKey}`);
                     if (stateKey === 'totalFlourGoal') inputEl = this.DOM.totalFlourInput;
-                    else if (stateKey === 'targetProtein') inputEl = this.DOM.targetProteinInput;
-                    else inputEl = document.getElementById(`pct-${stateKey}`);
+                    if (stateKey === 'targetProtein') inputEl = this.DOM.targetProteinInput;
+                    if (stateKey === 'tempRoom') inputEl = this.DOM.envRoomInput;
+                    if (stateKey === 'tempFlour') inputEl = this.DOM.envFlourInput;
                     
-                    if (inputEl) {
-                        inputEl.value = parsedVal;
-                    }
+                    if (inputEl) inputEl.value = parsedVal;
                 }
             }
         }
 
-        render() {
+        render(updateBatchField = true) {
             const computed = DoughEngine.calculate(this.state);
 
             if (!this.state.isUserOverridingProtein) {
@@ -721,6 +910,10 @@
                 this.DOM.targetProteinInput.classList.add('override-active');
                 this.DOM.statusMode.textContent = "Forced Protein Boost Active";
                 this.DOM.statusMode.style.color = "var(--accent-color)";
+            }
+
+            if (updateBatchField) {
+                this.DOM.batchWeightInput.value = Math.round(computed.grandTotalDough);
             }
 
             this.DOM.wtWater.textContent = computed.wWater.toFixed(2) + ' g';
@@ -744,12 +937,83 @@
             this.DOM.insLoafWt.textContent = formattedTotalDough + ' g';
             this.DOM.insPizzaWt.textContent = Math.round(computed.grandTotalDough / 4).toLocaleString() + ' g';
             this.DOM.insTrueHydration.textContent = computed.trueHydrationPct.toFixed(1) + '%';
+            this.DOM.insAutolyseWater.textContent = Math.round(computed.autolyseWater).toLocaleString() + ' g';
+            
+            this.DOM.insTargetDdt.textContent = computed.targetDdt.toFixed(1);
+            this.DOM.insWaterTemp.textContent = computed.targetWaterTemp.toFixed(1);
+            this.DOM.insBulkWindow.textContent = computed.predictedHours.toFixed(1);
+
+            window.currentComputedWeights = computed; 
+            window.currentUnitState = this.state.tempUnit;
 
             this.updateURLParams();
         }
     }
 
-    new AppController();
+    function setTempUnit(unit) {
+        window.app.setUnit(unit);
+    }
+
+    function openScaleMode() {
+        const data = window.currentComputedWeights;
+        if (!data) return;
+
+        const items = [
+            { name: "Flour: Bread Flour", weight: data.wBread },
+            { name: "Flour: All-Purpose Flour", weight: data.wAp },
+            { name: "Flour: Whole Wheat Flour", weight: data.wWw },
+            { name: "Flour: Spelt Flour", weight: data.wSpelt },
+            { name: "Flour: Vital Wheat Gluten", weight: data.wVwg },
+            { name: "Liquid: Water", weight: data.wWater },
+            { name: "Inclusion: Salt", weight: data.wSalt },
+            { name: "Inclusion: Levain / Starter", weight: data.wLevain }
+        ].filter(item => item.weight > 0);
+
+        const target = document.getElementById('scale-checklist-target');
+        target.innerHTML = '';
+
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'scale-item';
+            row.innerHTML = `<span class="name">${item.name}</span><span class="weight">${Math.round(item.weight)} g</span>`;
+            row.onclick = () => row.classList.toggle('checked');
+            target.appendChild(row);
+        });
+
+        document.getElementById('scale-mode-overlay').style.display = 'block';
+    }
+
+    function closeScaleMode() {
+        document.getElementById('scale-mode-overlay').style.display = 'none';
+    }
+
+    function copyRecipeText() {
+        const data = window.currentComputedWeights;
+        const unt = window.currentUnitState || 'F';
+        if (!data) return;
+
+        let txt = `SOURDOUGH STEVE RECIPE BATCH\n`;
+        txt += `=====================================\n`;
+        txt += `Total Batch Mass: ${Math.round(data.grandTotalDough)}g\n`;
+        txt += `True Combined Hydration: ${data.trueHydrationPct.toFixed(1)}%\n\n`;
+        txt += `INGREDIENT WEIGHTS:\n`;
+        if (data.wBread > 0) txt += `- Bread Flour: ${Math.round(data.wBread)}g\n`;
+        if (data.wAp > 0) txt += `- All-Purpose Flour: ${Math.round(data.wAp)}g\n`;
+        if (data.wWw > 0) txt += `- Whole Wheat Flour: ${Math.round(data.wWw)}g\n`;
+        if (data.wSpelt > 0) txt += `- Spelt Flour: ${Math.round(data.wSpelt)}g\n`;
+        if (data.wVwg > 0) txt += `- Vital Wheat Gluten: ${Math.round(data.wVwg)}g\n`;
+        txt += `- Water: ${Math.round(data.wWater)}g (Target Mix Temp: ${data.targetWaterTemp.toFixed(1)}°${unt})\n`;
+        txt += `- Salt: ${Math.round(data.wSalt)}g\n`;
+        txt += `- Levain: ${Math.round(data.wLevain)}g\n`;
+
+        navigator.clipboard.writeText(txt).then(() => {
+            alert("Recipe exported and copied to your clipboard successfully!");
+        }).catch(err => {
+            console.error("Could not copy text profile", err);
+        });
+    }
+
+    window.app = new AppController();
 </script>
 
 </body>
