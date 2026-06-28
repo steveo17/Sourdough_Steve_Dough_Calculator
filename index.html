@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artisan Dough Planner (v2.2.0)</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --input-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --summary-bg: #f1f3f5;
+            --accent-color: #d97706;
+            --accent-light: #fef3c7;
+            --status-success: #15803d;
+            --sans-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --mono-font: 'Roboto Mono', monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #12141a;
+                --card-bg: #1a1d24;
+                --text-main: #f3f4f6;
+                --text-muted: #9ca3af;
+                --border-color: #2e3440;
+                --input-bg: #12141a;
+                --panel-bg: #1a1d24;
+                --summary-bg: #222630;
+                --accent-color: #fbbf24;
+                --accent-light: #3a2f1d;
+                --status-success: #4ade80;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: var(--sans-font); 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px 15px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .calculator-card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color);
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+            width: 100%; 
+            max-width: 1050px; 
+            padding: 28px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 24px; 
+        }
+
+        header { 
+            border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-end; 
+        }
+
+        h1 { 
+            font-size: 1.3rem; 
+            font-weight: 700; 
+            letter-spacing: -0.3px;
+            color: var(--text-main); 
+        }
+        
+        .global-controls { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 24px; 
+        }
+
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+
+        .input-group label { 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            color: var(--text-muted); 
+        }
+
+        .input-wrapper { 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+        }
+
+        .input-wrapper input { 
+            width: 100%; 
+            padding: 12px 42px 12px 14px; 
+            font-family: var(--mono-font); 
+            font-size: 1.05rem; 
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            outline: none; 
+            text-align: right; 
+            transition: all 0.2s ease;
+        }
+
+        .input-wrapper input:focus { 
+            border-color: var(--accent-color); 
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+        }
+
+        .input-wrapper input.override-active { 
+            background-color: var(--accent-light); 
+            border-color: var(--accent-color); 
+            font-weight: 700; 
+        }
+
+        .input-wrapper .unit { 
+            position: absolute; 
+            right: 14px; 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            pointer-events: none; 
+        }
+
+        .workspace-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1.1fr; 
+            gap: 24px; 
+        }
+
+        .table-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        th { 
+            font-size: 0.72rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            color: var(--text-muted); 
+            padding: 12px; 
+            border-bottom: 2px solid var(--border-color); 
+        }
+
+        td { 
+            padding: 12px; 
+            border-bottom: 1px solid var(--border-color); 
+            vertical-align: middle; 
+        }
+
+        tr.ingredient-row {
+            transition: background-color 0.15s ease;
+        }
+
+        tr.ingredient-row:hover, tr.ingredient-row:focus-within {
+            background-color: var(--bg-color);
+        }
+        
+        .num-col { text-align: right; }
+
+        .table-input { 
+            width: 85px; 
+            padding: 8px 10px; 
+            font-family: var(--mono-font); 
+            font-size: 0.95rem; 
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            outline: none; 
+            text-align: right; 
+        }
+
+        .table-input:focus { border-color: var(--accent-color); }
+        
+        .output-text { 
+            font-family: var(--mono-font); 
+            font-size: 0.95rem; 
+            font-weight: 600; 
+            text-align: right; 
+            color: var(--text-main); 
+        }
+
+        .summary-row { 
+            background-color: var(--summary-bg); 
+            font-weight: 700; 
+        }
+
+        .summary-row td { 
+            padding: 14px 12px; 
+            border-top: 1px solid var(--border-color); 
+            border-bottom: none; 
+        }
+
+        .summary-value { 
+            font-family: var(--mono-font); 
+            text-align: right; 
+            font-weight: 700; 
+            color: var(--text-main);
+        }
+        
+        .grand-total-banner { 
+            background-color: var(--summary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main); 
+            font-weight: 700; 
+            padding: 18px 24px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 1.05rem; 
+        }
+
+        .grand-total-banner span { 
+            font-family: var(--mono-font); 
+            font-size: 1.3rem;
+            color: var(--accent-color);
+        }
+
+        .master-specs { 
+            border: 1px solid var(--border-color); 
+            padding: 20px; 
+            border-radius: 10px; 
+        }
+
+        .master-specs h3 { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            color: var(--text-muted); 
+            margin-bottom: 14px; 
+        }
+
+        .specs-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+        
+        .spec-box { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            background: var(--card-bg); 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+        }
+
+        .spec-box label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        
+        .spec-box input { 
+            border: none; 
+            background: transparent; 
+            color: var(--text-main);
+            font-family: var(--mono-font); 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            outline: none; 
+            text-align: right; 
+            width: 100%; 
+        }
+
+        @media (max-width: 850px) { .workspace-grid { grid-template-columns: 1fr; gap: 20px; } .specs-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+<div class="calculator-card">
+    <header>
+        <h1>Artisan Dough Planner</h1>
+        <div id="status-mode" style="font-family: var(--mono-font); font-size: 0.75rem; color: var(--status-success); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Tracking Natural Blend</div>
+    </header>
+
+    <div class="global-controls">
+        <div class="input-group">
+            <label>Target Total Flour Weight</label>
+            <div class="input-wrapper">
+                <input type="text" id="global-flour-weight" value="400" inputmode="decimal" autocomplete="off">
+                <span class="unit">g</span>
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Dough Target Protein Content</label>
+            <div class="input-wrapper">
+                <input type="text" id="global-target-protein" value="12.70" inputmode="decimal" autocomplete="off">
+                <span class="unit">%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace-grid">
+        <div class="table-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Liquids &amp; Inclusions</th>
+                        <th class="num-col">Baker's %</th>
+                        <th class="num-col">Weight</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--text-main); font-weight: 500;">Water</td>
+                        <td class="num-col"><input type="text" id="pct-water" class="table-input ui-sync" data-prop="water" value="75.0"></td>
+                        <td id="wt-water" class="output-text">0.00 g</td>
+                    </tr>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--text-main); font-weight: 500;">Salt</td>
+                        <td class="num-col"><input type="text" id="pct-salt" class="table-input ui-sync" data-prop="salt" value="2.5"></td>
+                        <td id="wt-salt" class="output-text">0.00 g</td>
+                    </tr>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--text-main); font-weight: 500;">Levain / Starter</td>
+                        <td class="num-col"><input type="text" id="pct-levain" class="table-input ui-sync" data-prop="levain" value="20.0"></td>
+                        <td id="wt-levain" class="output-text">0.00 g</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Flour Ingredient</th>
+                        <th class="num-col">％ of Total Flour</th>
+                        <th class="num-col">Weight</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="ingredient-row">
+                        <td style="font-weight: 600;">Bread Flour <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Balance)</span></td>
+                        <td id="pct-bread" class="output-text" style="color: var(--text-muted);">100.0%</td>
+                        <td id="wt-bread" class="output-text">0.00 g</td>
+                    </tr>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--text-main); font-weight: 500;">All-Purpose Flour</td>
+                        <td class="num-col"><input type="text" id="pct-ap" class="table-input ui-sync" data-prop="ap" value="0"></td>
+                        <td id="wt-ap" class="output-text">0.00 g</td>
+                    </tr>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--text-main); font-weight: 500;">Whole Wheat Flour</td>
+                        <td class="num-col"><input type="text" id="pct-ww" class="table-input ui-sync" data-prop="ww" value="0"></td>
+                        <td id="wt-ww" class="output-text">0.00 g</td>
+                    </tr>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--text-main); font-weight: 500;">Spelt Flour</td>
+                        <td class="num-col"><input type="text" id="pct-spelt" class="table-input ui-sync" data-prop="spelt" value="0"></td>
+                        <td id="wt-spelt" class="output-text">0.00 g</td>
+                    </tr>
+                    <tr class="ingredient-row">
+                        <td style="color: var(--accent-color); font-weight: 600;">Vital Wheat Gluten</td>
+                        <td id="pct-vwg" class="output-text" style="color: var(--accent-color);">0.00%</td>
+                        <td id="wt-vwg" class="output-text" style="color: var(--accent-color);">0.00 g</td>
+                    </tr>
+                    <tr class="summary-row">
+                        <td style="color: var(--text-main); font-weight: 700;">Total Flour</td>
+                        <td class="num-col" style="color: var(--text-muted);">100.00%</td>
+                        <td id="total-flour-wt" class="summary-value">0.00 g</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="grand-total-banner">
+        <div>TOTAL DOUGH BATCH WEIGHT</div>
+        <div><span id="grand-dough-weight">0.00</span> g</div>
+    </div>
+
+    <div class="master-specs">
+        <h3>Flour Base Protein Specs Lookup Registry</h3>
+        <div class="specs-grid">
+            <div class="spec-box"><label>Bread %</label><input type="text" id="prof-bread" class="ui-sync" data-prop="profBread" value="12.7"></div>
+            <div class="spec-box"><label>AP %</label><input type="text" id="prof-ap" class="ui-sync" data-prop="profAp" value="11.7"></div>
+            <div class="spec-box"><label>Whole Wheat %</label><input type="text" id="prof-ww" class="ui-sync" data-prop="profWw" value="13.8"></div>
+            <div class="spec-box"><label>Spelt %</label><input type="text" id="prof-spelt" class="ui-sync" data-prop="profSpelt" value="14.3"></div>
+            <div class="spec-box" style="border-color: var(--accent-color);"><label style="color: var(--accent-color);">Pure VWG %</label><input type="text" id="prof-vwg" class="ui-sync" data-prop="profVwg" value="75.0"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    class DoughEngine {
+        static calculate(state) {
+            const totalFlourGoal = state.totalFlourGoal;
+            
+            // Capped logical validation parsing to avoid negative values if inputs overflow 100%
+            const optionalPartsSum = state.ap + state.ww + state.spelt;
+            const scalingFactor = optionalPartsSum > 100 ? (100 / optionalPartsSum) : 1.0;
+
+            const pAp = state.ap * scalingFactor;
+            const pWw = state.ww * scalingFactor;
+            const pSpelt = state.spelt * scalingFactor;
+
+            const wAp = totalFlourGoal * (pAp / 100);
+            const wWw = totalFlourGoal * (pWw / 100);
+            const wSpelt = totalFlourGoal * (pSpelt / 100);
+            const wBreadUnboosted = Math.max(0, totalFlourGoal - (wAp + wWw + wSpelt));
+
+            const naturalProteinMass = 
+                (wBreadUnboosted * state.profBread) + 
+                (wAp * state.profAp) + 
+                (wWw * state.profWw) + 
+                (wSpelt * state.profSpelt);
+            
+            const baselineProteinPct = totalFlourGoal > 0 ? (naturalProteinMass / totalFlourGoal) : 0;
+            let targetProtein = state.isUserOverridingProtein ? state.targetProtein : baselineProteinPct;
+            
+            let wVwg = 0;
+            let wBreadFinal = wBreadUnboosted;
+
+            if (targetProtein > baselineProteinPct && state.profVwg > state.profBread) {
+                wVwg = totalFlourGoal * ((targetProtein - baselineProteinPct) / (state.profVwg - state.profBread));
+                wBreadFinal = wBreadUnboosted - wVwg;
+                
+                if (wBreadFinal < 0) {
+                    wBreadFinal = 0;
+                    wVwg = Math.max(0, totalFlourGoal - (wAp + wWw + wSpelt));
+                }
+            }
+
+            const wWater = totalFlourGoal * (state.water / 100);
+            const wSalt = totalFlourGoal * (state.salt / 100);
+            const wLevain = totalFlourGoal * (state.levain / 100);
+
+            return {
+                targetProtein,
+                baselineProteinPct,
+                wBread: wBreadFinal,
+                wAp,
+                wWw,
+                wSpelt,
+                wVwg,
+                pBread: totalFlourGoal > 0 ? ((wBreadFinal / totalFlourGoal) * 100) : 0,
+                pVwg: totalFlourGoal > 0 ? ((wVwg / totalFlourGoal) * 100) : 0,
+                wWater,
+                wSalt,
+                wLevain,
+                grandTotalDough: totalFlourGoal + wWater + wSalt + wLevain
+            };
+        }
+    }
+
+    class AppController {
+        constructor() {
+            this.state = {
+                totalFlourGoal: 400,
+                targetProtein: 12.70,
+                isUserOverridingProtein: false,
+                water: 75.0,
+                salt: 2.5,
+                levain: 20.0,
+                ap: 0,
+                ww: 0,
+                spelt: 0,
+                profBread: 12.7,
+                profAp: 11.7,
+                profWw: 13.8,
+                profSpelt: 14.3,
+                profVwg: 75.0
+            };
+
+            this.DOM = {
+                totalFlourInput: document.getElementById('global-flour-weight'),
+                targetProteinInput: document.getElementById('global-target-protein'),
+                statusMode: document.getElementById('status-mode'),
+                wtWater: document.getElementById('wt-water'),
+                wtSalt: document.getElementById('wt-salt'),
+                wtLevain: document.getElementById('wt-levain'),
+                pctBread: document.getElementById('pct-bread'),
+                wtBread: document.getElementById('wt-bread'),
+                wtAp: document.getElementById('wt-ap'),
+                wtWw: document.getElementById('wt-ww'),
+                wtSpelt: document.getElementById('wt-spelt'),
+                pctVwg: document.getElementById('pct-vwg'),
+                wtVwg: document.getElementById('wt-vwg'),
+                totalFlourWt: document.getElementById('total-flour-wt'),
+                grandDoughWeight: document.getElementById('grand-dough-weight')
+            };
+
+            this.paramMap = {
+                'totalFlourGoal': 'flour',
+                'targetProtein': 'prot',
+                'water': 'water',
+                'salt': 'salt',
+                'levain': 'levain',
+                'ap': 'ap',
+                'ww': 'ww',
+                'spelt': 'spelt'
+            };
+
+            this.initEvents();
+            this.loadURLParams();
+            this.render();
+        }
+
+        initEvents() {
+            document.querySelectorAll('.ui-sync').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const prop = e.target.dataset.prop;
+                    this.state[prop] = parseFloat(e.target.value) || 0;
+                    this.state.isUserOverridingProtein = false; 
+                    this.render();
+                });
+            });
+
+            this.DOM.totalFlourInput.addEventListener('input', (e) => {
+                this.state.totalFlourGoal = parseFloat(e.target.value) || 0;
+                this.state.isUserOverridingProtein = false;
+                this.render();
+            });
+
+            this.DOM.targetProteinInput.addEventListener('input', (e) => {
+                this.state.isUserOverridingProtein = true;
+                this.state.targetProtein = parseFloat(e.target.value) || 0;
+                this.render();
+            });
+        }
+
+        updateURLParams() {
+            const params = new URLSearchParams();
+            for (const [stateKey, paramName] of Object.entries(this.paramMap)) {
+                if (this.state[stateKey] !== 0) {
+                    params.set(paramName, this.state[stateKey]);
+                }
+            }
+            if (this.state.isUserOverridingProtein) {
+                params.set('boost', 'true');
+            }
+            const newURL = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + params.toString();
+            window.history.replaceState({ path: newURL }, '', newURL);
+        }
+
+        loadURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.get('boost') === 'true') {
+                this.state.isUserOverridingProtein = true;
+            }
+
+            for (const [stateKey, paramName] of Object.entries(this.paramMap)) {
+                const val = params.get(paramName);
+                if (val !== null) {
+                    const parsedVal = parseFloat(val) || 0;
+                    this.state[stateKey] = parsedVal;
+                    
+                    // Engineering fix: Map dynamic properties cleanly to clear textual HTML element nodes
+                    let inputEl = null;
+                    if (stateKey === 'totalFlourGoal') inputEl = this.DOM.totalFlourInput;
+                    else if (stateKey === 'targetProtein') inputEl = this.DOM.targetProteinInput;
+                    else inputEl = document.getElementById(`pct-${stateKey}`);
+                    
+                    if (inputEl) {
+                        inputEl.value = parsedVal;
+                    }
+                }
+            }
+        }
+
+        render() {
+            const computed = DoughEngine.calculate(this.state);
+
+            if (!this.state.isUserOverridingProtein) {
+                this.DOM.targetProteinInput.value = computed.targetProtein.toFixed(2);
+                this.DOM.targetProteinInput.classList.remove('override-active');
+                this.DOM.statusMode.textContent = "Tracking Natural Blend";
+                this.DOM.statusMode.style.color = "var(--status-success)";
+            } else {
+                this.DOM.targetProteinInput.classList.add('override-active');
+                this.DOM.statusMode.textContent = "Forced Protein Boost Active";
+                this.DOM.statusMode.style.color = "var(--accent-color)";
+            }
+
+            this.DOM.wtWater.textContent = computed.wWater.toFixed(2) + ' g';
+            this.DOM.wtSalt.textContent = computed.wSalt.toFixed(2) + ' g';
+            this.DOM.wtLevain.textContent = computed.wLevain.toFixed(2) + ' g';
+
+            this.DOM.pctBread.textContent = computed.pBread.toFixed(1) + '%';
+            this.DOM.wtBread.textContent = computed.wBread.toFixed(2) + ' g';
+            this.DOM.wtAp.textContent = computed.wAp.toFixed(2) + ' g';
+            this.DOM.wtWw.textContent = computed.wWw.toFixed(2) + ' g';
+            this.DOM.wtSpelt.textContent = computed.wSpelt.toFixed(2) + ' g';
+            
+            this.DOM.pctVwg.textContent = computed.pVwg.toFixed(2) + '%';
+            this.DOM.wtVwg.textContent = computed.wVwg.toFixed(2) + ' g';
+            
+            this.DOM.totalFlourWt.textContent = this.state.totalFlourGoal.toFixed(2) + ' g';
+            this.DOM.grandDoughWeight.textContent = computed.grandTotalDough.toFixed(2);
+
+            this.updateURLParams();
+        }
+    }
+
+    new AppController();
+</script>
+
+</body>
+</html>
