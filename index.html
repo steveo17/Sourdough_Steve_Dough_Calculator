@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sourdough Steve's Dough Calculator (v2.4.0)</title>
+    <title>Sourdough Steve's Dough Calculator (v2.4.1)</title>
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -309,7 +309,6 @@
             width: 100%; 
         }
 
-        /* Changelog Interactive Styles */
         footer {
             display: flex;
             flex-direction: column;
@@ -449,7 +448,7 @@
                     <tr class="ingredient-row">
                         <td style="color: var(--accent-color); font-weight: 600;">Vital Wheat Gluten</td>
                         <td id="pct-vwg" class="output-text" style="color: var(--accent-color);">0.00%</td>
-                        <td id="wt-vwg" class="output-text" style="color: var(--accent-color);">0.00 g</td>
+                        <td id="wt-vwg" class="output-text">0.00 g</td>
                     </tr>
                     <tr class="summary-row">
                         <td style="color: var(--text-main); font-weight: 700;">Total Flour</td>
@@ -495,11 +494,23 @@
     <footer>
         <div class="changelog-trigger" onclick="toggleChangelog()">View Version History &amp; App Changelog</div>
         <div id="changelog-panel" class="changelog-container">
+            <div class="changelog-item"><strong>v2.4.1:</strong> Updated comprehensive application title headers and inner execution instances to explicitly sync with repository branding.</div>
             <div class="changelog-item"><strong>v2.4.0:</strong> Restored the running development changelog as an expandable panel footer element to keep revision documentation localized to browser execution.</div>
             <div class="changelog-item"><strong>v2.3.0:</strong> Integrated brdclc-style metrics cards tracking physical scaling portions, yield limits, and true absolute hydration breaking down preferment hydration pools.</div>
             <div class="changelog-item"><strong>v2.2.0:</strong> Fixed URL state hydration sync delay and added saturation constraint thresholds capping secondary flours to avoid calculations from falling below absolute zero.</div>
+            <div class="changelog-item"><strong>v2.1.1:</strong> Re-anchored default hydration target values to 75% water and 2.5% salt as a foundational starting baseline while preserving URL routing.</div>
             <div class="changelog-item"><strong>v2.1.0:</strong> Built serialization systems preserving formula inputs inside browser window parameters for cloudless recipe bookmarking.</div>
-            <div class="changelog-item"><strong>v2.0.0:</strong> Architectural rebuild separating the math models from the DOM. Replaced loose global loops with an explicit single source of truth structure.</div>
+            <div class="changelog-item"><strong>v2.0.2:</strong> Reset default starting ratio for Spelt Flour back to 0% to ensure clean recipe initializations.</div>
+            <div class="changelog-item"><strong>v2.0.1:</strong> Incremented standard application starting state to 75.0% Water and 2.5% Salt straight out of the box.</div>
+            <div class="changelog-item"><strong>v2.0.0:</strong> Major architectural rebuild separating the math models from the DOM. Replaced loose global loops with an explicit single source of truth structure.</div>
+            <div class="changelog-item"><strong>v1.14.1:</strong> Introduced low-profile block contrast backgrounds on user-editable input nodes to mimic standard plain-text web form affordances.</div>
+            <div class="changelog-item"><strong>v1.14.0:</strong> Executed a full design language overhaul inspired by brdclc.com, removing borders and heavy cards in favor of minimalist typography and inline dashed underlines.</div>
+            <div class="changelog-item"><strong>v1.13.0:</strong> Replaced the dark-only style with a native media query system tracking device light/dark mode settings automatically. Switched accent properties to an amber palette.</div>
+            <div class="changelog-item"><strong>v1.12.0:</strong> Rebuilt the user interface with a custom high-contrast dark palette tailored for better legibility on tablet screens on flour-dusted kitchen counters.</div>
+            <div class="changelog-item"><strong>v1.11.0:</strong> Developed a fully bidirectional engine where the target protein input updates to match the natural blend base or locks down for forced gluten calculation.</div>
+            <div class="changelog-item"><strong>v1.10.0:</strong> Streamlined table layouts by stripping out confusing operational subtotal headers and closing mathematical weight loop references.</div>
+            <div class="changelog-item"><strong>v1.9.0:</strong> Complete algorithmic refactor establishing Total Flour Weight as the primary equation anchor and scaling inclusion masses cleanly through standard Baker's math.</div>
+            <div class="changelog-item"><strong>v1.0.0:</strong> Initial core prototype mapping basic hydration metrics and manual flour ratio fields into raw browser calculations.</div>
         </div>
     </footer>
 </div>
