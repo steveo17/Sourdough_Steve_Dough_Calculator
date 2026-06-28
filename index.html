@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artisan Dough Planner (v2.2.0)</title>
+    <title>Sourdough Steve's Dough Calculator (v2.2.1)</title>
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -286,7 +286,7 @@
 
 <div class="calculator-card">
     <header>
-        <h1>Artisan Dough Planner</h1>
+        <h1>Sourdough Steve's Dough Calculator</h1>
         <div id="status-mode" style="font-family: var(--mono-font); font-size: 0.75rem; color: var(--status-success); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Tracking Natural Blend</div>
     </header>
 
@@ -308,6 +308,7 @@
     </div>
 
     <div class="workspace-grid">
+        <!-- Inclusions Column -->
         <div class="table-panel">
             <table>
                 <thead>
@@ -337,6 +338,7 @@
             </table>
         </div>
 
+        <!-- Flour Column -->
         <div class="table-panel">
             <table>
                 <thead>
@@ -404,7 +406,6 @@
         static calculate(state) {
             const totalFlourGoal = state.totalFlourGoal;
             
-            // Capped logical validation parsing to avoid negative values if inputs overflow 100%
             const optionalPartsSum = state.ap + state.ww + state.spelt;
             const scalingFactor = optionalPartsSum > 100 ? (100 / optionalPartsSum) : 1.0;
 
@@ -564,7 +565,6 @@
                     const parsedVal = parseFloat(val) || 0;
                     this.state[stateKey] = parsedVal;
                     
-                    // Engineering fix: Map dynamic properties cleanly to clear textual HTML element nodes
                     let inputEl = null;
                     if (stateKey === 'totalFlourGoal') inputEl = this.DOM.totalFlourInput;
                     else if (stateKey === 'targetProtein') inputEl = this.DOM.targetProteinInput;
