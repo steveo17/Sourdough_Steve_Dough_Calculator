@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sourdough Steve's Dough Calculator (v2.2.1)</title>
+    <title>Sourdough Steve's Dough Calculator (v2.4.0)</title>
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -238,6 +238,36 @@
             color: var(--accent-color);
         }
 
+        .insight-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+
+        .insight-block h4 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .insight-block p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        .insight-block p span {
+            font-family: var(--mono-font);
+            font-weight: 700;
+        }
+
         .master-specs { 
             border: 1px solid var(--border-color); 
             padding: 20px; 
@@ -277,6 +307,53 @@
             outline: none; 
             text-align: right; 
             width: 100%; 
+        }
+
+        /* Changelog Interactive Styles */
+        footer {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .changelog-trigger {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        .changelog-trigger:hover {
+            color: var(--text-main);
+        }
+
+        .changelog-container {
+            display: none;
+            background-color: var(--summary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .changelog-item {
+            margin-bottom: 10px;
+        }
+
+        .changelog-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .changelog-item strong {
+            font-family: var(--mono-font);
+            color: var(--accent-color);
         }
 
         @media (max-width: 850px) { .workspace-grid { grid-template-columns: 1fr; gap: 20px; } .specs-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -389,6 +466,21 @@
         <div><span id="grand-dough-weight">0.00</span> g</div>
     </div>
 
+    <div class="insight-section">
+        <div class="insight-block">
+            <h4>Dough Weight &amp; Scaling</h4>
+            <p>Your total dough weight is <span id="insight-dough-wt">0 g</span>. You could make 1 loaf at <span id="insight-loaf-wt">0 g</span> or <span id="insight-pizza-count">4</span> pizzas at <span id="insight-pizza-wt">0 g</span> each.</p>
+        </div>
+        <div class="insight-block">
+            <h4>Hydration Context</h4>
+            <p>If using a 100% hydration pre-ferment, the total consolidated hydration of your dough is <span id="insight-true-hydration">0.0%</span>.</p>
+        </div>
+        <div class="insight-block">
+            <h4>Saving and Sharing</h4>
+            <p>The values you input above are saved dynamically in the URL parameter string so you can easily save or share a recipe. Use this to seed your notes profile each time you mix a batch.</p>
+        </div>
+    </div>
+
     <div class="master-specs">
         <h3>Flour Base Protein Specs Lookup Registry</h3>
         <div class="specs-grid">
@@ -399,9 +491,25 @@
             <div class="spec-box" style="border-color: var(--accent-color);"><label style="color: var(--accent-color);">Pure VWG %</label><input type="text" id="prof-vwg" class="ui-sync" data-prop="profVwg" value="75.0"></div>
         </div>
     </div>
+
+    <footer>
+        <div class="changelog-trigger" onclick="toggleChangelog()">View Version History &amp; App Changelog</div>
+        <div id="changelog-panel" class="changelog-container">
+            <div class="changelog-item"><strong>v2.4.0:</strong> Restored the running development changelog as an expandable panel footer element to keep revision documentation localized to browser execution.</div>
+            <div class="changelog-item"><strong>v2.3.0:</strong> Integrated brdclc-style metrics cards tracking physical scaling portions, yield limits, and true absolute hydration breaking down preferment hydration pools.</div>
+            <div class="changelog-item"><strong>v2.2.0:</strong> Fixed URL state hydration sync delay and added saturation constraint thresholds capping secondary flours to avoid calculations from falling below absolute zero.</div>
+            <div class="changelog-item"><strong>v2.1.0:</strong> Built serialization systems preserving formula inputs inside browser window parameters for cloudless recipe bookmarking.</div>
+            <div class="changelog-item"><strong>v2.0.0:</strong> Architectural rebuild separating the math models from the DOM. Replaced loose global loops with an explicit single source of truth structure.</div>
+        </div>
+    </footer>
 </div>
 
 <script>
+    function toggleChangelog() {
+        const el = document.getElementById('changelog-panel');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
     class DoughEngine {
         static calculate(state) {
             const totalFlourGoal = state.totalFlourGoal;
@@ -443,6 +551,13 @@
             const wWater = totalFlourGoal * (state.water / 100);
             const wSalt = totalFlourGoal * (state.salt / 100);
             const wLevain = totalFlourGoal * (state.levain / 100);
+            const grandTotalDough = totalFlourGoal + wWater + wSalt + wLevain;
+
+            const wFlourFromLevain = wLevain / 2;
+            const wWaterFromLevain = wLevain / 2;
+            const absoluteTotalFlourMass = totalFlourGoal + wFlourFromLevain;
+            const absoluteTotalWaterMass = wWater + wWaterFromLevain;
+            const trueHydrationPct = absoluteTotalFlourMass > 0 ? ((absoluteTotalWaterMass / absoluteTotalFlourMass) * 100) : 0;
 
             return {
                 targetProtein,
@@ -457,7 +572,8 @@
                 wWater,
                 wSalt,
                 wLevain,
-                grandTotalDough: totalFlourGoal + wWater + wSalt + wLevain
+                grandTotalDough,
+                trueHydrationPct
             };
         }
     }
@@ -496,7 +612,12 @@
                 pctVwg: document.getElementById('pct-vwg'),
                 wtVwg: document.getElementById('wt-vwg'),
                 totalFlourWt: document.getElementById('total-flour-wt'),
-                grandDoughWeight: document.getElementById('grand-dough-weight')
+                grandDoughWeight: document.getElementById('grand-dough-weight'),
+                insDoughWt: document.getElementById('insight-dough-wt'),
+                insLoafWt: document.getElementById('insight-loaf-wt'),
+                insPizzaCount: document.getElementById('insight-pizza-count'),
+                insPizzaWt: document.getElementById('insight-pizza-wt'),
+                insTrueHydration: document.getElementById('insight-true-hydration')
             };
 
             this.paramMap = {
@@ -606,6 +727,12 @@
             
             this.DOM.totalFlourWt.textContent = this.state.totalFlourGoal.toFixed(2) + ' g';
             this.DOM.grandDoughWeight.textContent = computed.grandTotalDough.toFixed(2);
+
+            const formattedTotalDough = Math.round(computed.grandTotalDough).toLocaleString();
+            this.DOM.insDoughWt.textContent = formattedTotalDough + ' g';
+            this.DOM.insLoafWt.textContent = formattedTotalDough + ' g';
+            this.DOM.insPizzaWt.textContent = Math.round(computed.grandTotalDough / 4).toLocaleString() + ' g';
+            this.DOM.insTrueHydration.textContent = computed.trueHydrationPct.toFixed(1) + '%';
 
             this.updateURLParams();
         }
